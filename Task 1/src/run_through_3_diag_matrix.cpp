@@ -25,12 +25,3 @@ vector run_through_3_diag_matrix(vector as, vector bs, vector cs, vector ds){
     xs[0] = ps[0] * xs[1] + qs[0];
     return xs;
 }
-
-int main(){
-    vector as = {2, 3};
-    vector bs = {10, 20, 10};
-    vector cs = {2, 3};
-    vector ds = {5, 4, 7};
-    vector result = run_through_3_diag_matrix(as, bs, cs, ds);
-    std::cout << result[0] << " " << result[1] << " " << result[2];
-}
