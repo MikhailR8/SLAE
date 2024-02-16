@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/runTests.dir/test.cpp.o CMakeFiles/runTests.dir/dense_CSR.cpp.o -o runTests  /usr/lib/x86_64-linux-gnu/libgtest.a -lpthread 
