@@ -1,11 +1,11 @@
-#include "dense_CSR.hpp"
 #include <gtest/gtest.h>
+#include <libSLAE/dense_CSR.hpp>
 
 TEST(Matrix_test, first_matrix) {
     std::vector<std::vector<double>> arr = 
     std::vector<std::vector<double>>({{0, 2, 0}, {2, 0, 4}, {1, 2, 0}});
-    auto mat = cmake_example::Matrix(arr);
-    auto mat_csr = cmake_example::Matrix_CSR(arr);
+    auto mat = dense_CSR::Matrix(arr);
+    auto mat_csr = dense_CSR::Matrix_CSR(arr);
     std::vector<double> v = std::vector<double>({1, 5, 3});
     auto out1 = mat * v;
     auto out2 = mat_csr * v;

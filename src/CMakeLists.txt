@@ -1,11 +1,6 @@
-cmake_minimum_required(VERSION 3.22 FATAL_ERROR)
+#Записываем в переменную SOURCES list всех .cpp и .hpp из директории и субдиректорий
+file(GLOB_RECURSE SOURCES *.hpp *.cpp)
+add_library(${PROJECT_NAME} STATIC ${SOURCES})
 
-project(Task2)
-
-# Locate GTest
-find_package(GTest REQUIRED)
-include_directories(${GTEST_INCLUDE_DIRS})
- 
-# Link runTests with what we want to test and the GTest and pthread library
-add_executable(runTests test.cpp dense_CSR.cpp)
-target_link_libraries(runTests ${GTEST_LIBRARIES} pthread)
+target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)

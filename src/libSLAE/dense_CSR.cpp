@@ -1,14 +1,10 @@
 #include "dense_CSR.hpp"
 
-namespace cmake_example{
-    Matrix::Matrix(std::vector<std::vector<double>>& input){
-        unsigned int m_input = input.size();
-        unsigned int n_input = input[0].size();
-        m = m_input;
-        n = n_input;
-        data = vector(m * n);
-        for(int i = 0; i < m; i++){
-            for(int j = 0; j < n; j++){
+namespace dense_CSR{
+    Matrix::Matrix(const std::vector<vector>& input): m{input.size()}, n{input[0].size()},
+    data{vector(input.size() * input[0].size())}{
+        for(auto i = 0u; i < m; i++){
+            for(auto j = 0u; j < n; j++){
                 data[n * i + j] = input[i][j];
             }
         }
@@ -18,12 +14,12 @@ namespace cmake_example{
         return data[n * i + j];
     }
 
-    std::pair<unsigned, unsigned> Matrix::get_size() const{
-        return std::pair<unsigned, unsigned>({m, n});
+    std::pair<vector::size_type, vector::size_type> Matrix::get_size() const{
+        return std::pair<vector::size_type, vector::size_type>({m, n});
     }
 
     vector Matrix::operator*(const vector &v) const{
-        std::vector<double> res(v.size());
+        vector res(v.size());
         for (auto i = 0u; i < m; i++) {
             for(auto j = 0u; j < n; j++){
                 res[i] += data[n * i + j] * v[j];
@@ -32,17 +28,11 @@ namespace cmake_example{
         return res;
     }        
 
-    Matrix_CSR::Matrix_CSR(std::vector<std::vector<double>>& input){
-        unsigned int m_input = input.size();
-        unsigned int n_input = input[0].size();
-        m = m_input;
-        n = n_input;
-        values = vector();
-        cols = vector();
-        rows = vector({0});
-        int counter_elems = 0;
-        for(int i = 0; i < m; i++){
-            for(int j = 0; j < n; j++){
+    Matrix_CSR::Matrix_CSR(const std::vector<vector>& input): m{input.size()}, n{input[0].size()},
+    values{vector()}, cols{std::vector<unsigned>()}, rows{std::vector<unsigned>({0u})}{
+        auto counter_elems = 0u;
+        for(auto i = 0u; i < m; i++){
+            for(auto j = 0u; j < n; j++){
                 if(input[i][j] != 0){
                     values.push_back(input[i][j]);
                     cols.push_back(j);
@@ -54,7 +44,7 @@ namespace cmake_example{
     }
 
     double Matrix_CSR::operator()(int i, int j) const{
-        for (int k = rows[i]; k < rows[i + 1]; ++k) {
+        for (unsigned k = rows[i]; k < rows[i + 1]; ++k) {
             if (cols[k] == j) {
                 return values[k];
             }
@@ -62,12 +52,12 @@ namespace cmake_example{
         return 0;
     }
 
-    std::pair<unsigned, unsigned> Matrix_CSR::get_size() const{
-        return std::pair<unsigned, unsigned>({m, n});
+    std::pair<vector::size_type, vector::size_type> Matrix_CSR::get_size() const{
+        return std::pair<vector::size_type, vector::size_type>({m, n});
     }
 
     vector Matrix_CSR::operator*(const vector& v) const {
-        std::vector<double> res(v.size());
+        vector res(v.size());
         for (int i = 0; i < v.size(); ++i) {
             for (int k = this->rows[i]; k < this->rows[i + 1]; ++k) {
                 res[i] += this->values[k] * v[this->cols[k]];

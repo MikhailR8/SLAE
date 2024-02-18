@@ -1,3 +1,0 @@
-/home/mikro/sem4/SLAE/src/build/CMakeFiles/runTests.dir
-/home/mikro/sem4/SLAE/src/build/CMakeFiles/edit_cache.dir
-/home/mikro/sem4/SLAE/src/build/CMakeFiles/rebuild_cache.dir
