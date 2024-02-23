@@ -10,8 +10,45 @@ namespace dense_CSR{
         }
     }
 
-    double Matrix::operator()(int i, int j) const{
+    Matrix::Matrix(const Matrix& input): m{input.get_size().first}, n{input.get_size().second},
+    data{input.get_raw_data()} {}
+
+    double Matrix::operator()(unsigned i, unsigned j) const{
         return data[n * i + j];
+    }
+
+    void Matrix::set_ij(unsigned i, unsigned j, double value){
+        data[n * i + j] = value;
+    }
+
+    void Matrix::set_col(unsigned start_point, vector col, unsigned num_col){
+        for(auto i = 0u; i < col.size(); i++){
+            data[n * (i + start_point) + num_col] = col[i];
+        }
+    }
+
+    void Matrix::set_row(unsigned start_point, vector row, unsigned num_row){
+        for(auto i = 0; i < row.size(); i++){
+            data[n * num_row + (i + start_point)] = row[i];
+        }
+    }
+
+    vector Matrix::get_col(unsigned start_point, unsigned stop_point, unsigned num_col) const{
+        int size = static_cast<int>(stop_point) - static_cast<int>(start_point);
+        auto out = vector(size);
+        for(auto i = 0; i < size; i++){
+            out[i] = data[n * (i + static_cast<int>(start_point)) + num_col];
+        }
+        return out;
+    }
+
+    vector Matrix::get_row(unsigned start_point, unsigned stop_point, unsigned num_row) const{
+        int size = static_cast<int>(stop_point) - static_cast<int>(start_point);
+        auto out = vector(size);
+        for(auto i = 0; i < size; i++){
+            out[i] = data[n * num_row + (i + static_cast<int>(start_point))];
+        }
+        return out;
     }
 
     std::pair<vector::size_type, vector::size_type> Matrix::get_size() const{
@@ -26,7 +63,24 @@ namespace dense_CSR{
             }
         }
         return res;
-    }        
+    }      
+
+    vector Matrix::get_raw_data() const{
+        return vector(data);
+    }  
+
+    void Matrix::transpose(){
+        for (auto i = 0u; i < m; i++){
+            for(auto j = i + 1; j < n; j++){
+                double temp = data[n * i + j];
+                data[n * i + j] = data[n * j + i];
+                data[n * j + i] = temp;
+            }
+        }
+        auto temp = n;
+        n = m;
+        m = temp;
+    }
 
     Matrix_CSR::Matrix_CSR(const std::vector<vector>& input): m{input.size()}, n{input[0].size()},
     values{vector()}, cols{std::vector<unsigned>()}, rows{std::vector<unsigned>({0u})}{
@@ -78,9 +132,25 @@ namespace dense_CSR{
     double operator*(const vector& lhs, const vector& rhs){
         double res = 0;
         for (auto i = 0u; i < lhs.size(); i++){
-            res += lhs[i] + rhs[i];
+            res += lhs[i] * rhs[i];
         }
         return res;       
+    }
+
+    vector operator*(double rhs, const vector& lhs){
+        vector out = vector(lhs.size());
+        for (auto i = 0u; i < lhs.size(); i++){
+            out[i] = rhs * lhs[i];
+        }
+        return out;
+    }
+
+    double get_length(const vector& v){
+        double out = 0;
+        for (auto i = 0u; i < v.size(); i++){
+            out += (v[i] * v[i]);
+        }
+        return std::sqrt(out);
     }
 
 }
