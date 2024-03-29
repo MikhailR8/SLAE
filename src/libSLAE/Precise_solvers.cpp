@@ -26,19 +26,19 @@ namespace Precise_solvers{
     }
 
     vector solve_qr(const vector& b, const dense_CSR::Matrix& A){
-        auto pair = QR(A);
-        auto Q = pair.first;
-        auto R = pair.second;
+        auto [Q, R] = QR(A);
         vector::size_type m = R.get_size().first;
         vector::size_type n = R.get_size().second;
         Q.transpose();
         auto answer = Q * b;
-        for (int i = static_cast<int>(b.size()) - 1; i >= 0; i--){
+        for (auto k = 0u; k < n; k++){
+            auto i = n - 1 - k; //новый счётчик
             auto row = R.get_row(0, n, i);
             answer[i] *= (1 / row[i]);
             row = dense_CSR::operator*((1 / row[i]), row);
             R.set_row(0, row, i);
-            for (int j = static_cast<int>(b.size()) - 1; j > i; j--){
+            for (auto p = 0u; p < n - 1u - i; p++){
+                auto j = n - 1 - p; //новый счётчик
                 answer[i] -= answer[j] * (R(i, j));
             }
         }
