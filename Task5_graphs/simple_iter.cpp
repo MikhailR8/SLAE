@@ -83,19 +83,20 @@ namespace simple_iter{
         double sin_const = 2 * root * sin_now;
         double cos_const = (root * root) - (sin_now * sin_now);
         roots[0] = root;
-        roots[count - 1u] = -1 * root;
+        roots[count - 1u] = -1.0 * root;
 
         for (auto i = 1u; i < (count / 2u); i++){
             auto cos_now = root;
             root = root * cos_const - sin_now * sin_const;
             sin_now = sin_now * cos_const + sin_const * cos_now;
             roots[i] = root;
-            roots[count - 1u - i] = -1 * root;
+            roots[count - 1u - i] = -1.0 * root;
         }
 
         vector res(count);
         for(auto i = 0u; i < count; i++){
-            res[i] = 1 / ((lambda_max + lambda_min) / 2.0 + (lambda_max - lambda_min) / 2.0 *  roots[indices[i]]);
+            res[i] = 1.0 / ((lambda_max + lambda_min) / 2.0
+             + (lambda_max - lambda_min) / 2.0 *  roots[indices[i]]);
         }
 
         return res;

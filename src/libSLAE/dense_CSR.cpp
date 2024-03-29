@@ -120,22 +120,19 @@ namespace dense_CSR{
         return res;
     }
 
-    vector Matrix_CSR::diag_reverse_multiplication(const vector& v) const{
-        auto res = vector(v.size());
-        for (auto i = 0u; i < v.size(); i++){
-            res[i] = 1.0 / this->operator()(i, i) * v[i];
-        }
-        return res;
-    }
-
-    vector Matrix_CSR::LU_multiplication(const vector& v) const{
-        vector res(v.size());
+    vector Matrix_CSR::Jacobi_iteration(const vector& v, const vector& b) const{
+        auto res = vector(b);
         for (auto i = 0u; i < v.size(); ++i) {
+            auto divider = 0.0;
             for (auto k = rows[i]; k < rows[i + 1]; ++k) {
                 if(i != cols[k]){
-                    res[i] += values[k] * v[cols[k]];
+                    res[i] -= values[k] * v[cols[k]];
+                }
+                else{
+                    divider = values[k];
                 }
             }
+            res[i] /= divider;
         }
         return res;
     }
@@ -163,6 +160,46 @@ namespace dense_CSR{
             res[i] /= divider;
         }
         return res;
+    }
+
+    vector Matrix_CSR::Symmetric_Gauss_Seidel_iteration(const vector& v, const vector& b) const {
+        auto res = vector(v);
+    //x_{0}^{i+1} = 1/D_0 * (b_0 - A_{01}x_{1}^{i} - A_{02}x_{2}^{i} - ... - A_{0, n-1}x_{n-1}^{i})
+    //x_{1}^{i+1} = 1/D_1 * (b_1 - A_{12}x_{2}^{i} - ... - A_{1, n-1}x_{n-1}^{i} - A_{10}x_{0}^{i+1})
+    //...
+    //Последнее слагаемое в выражении x_{1}^{i+1} содержит уже вычисленное x_{0}^{i+1}, а при
+    //вычислении x{j}^{i+1} элемент x{j}^{i} не используется, поэтому в начале приравниваем
+    //res[i] = b[i] (это безопасно), а проходя по CSR матрице запоминаем диагональный элемент, чтобы
+    //сэкономить время
+        for(auto i = 0u; i < n; i++){
+            res[i] = b[i];
+            auto divider = 0.0;
+            for (auto k = rows[i]; k < rows[i + 1]; ++k) {
+                if(cols[k] != i){
+                    res[i] -= values[k] * res[cols[k]];
+                }
+                else{
+                    divider = values[k];
+                }
+            }
+            res[i] /= divider;
+        }
+
+        for(auto i = 0u; i < n; i++){
+            unsigned j = n - 1 - i; //новый счётчик
+            res[j] = b[j];
+            auto divider = 0.0;
+            for (auto k = rows[j]; k < rows[j + 1]; ++k) {
+                if(cols[k] != j){
+                    res[j] -= values[k] * res[cols[k]];
+                }
+                else{
+                    divider = values[k];
+                }
+            }
+            res[j] /= divider;
+        }
+        return res;        
     }
 
     vector operator+(const vector& lhs, const vector& rhs){

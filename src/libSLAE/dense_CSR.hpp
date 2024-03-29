@@ -47,11 +47,11 @@ namespace dense_CSR{
 
         vector operator*(const vector& v) const;
 
-        vector diag_reverse_multiplication(const vector& v) const;
-
-        vector LU_multiplication(const vector& v) const;
+        vector Jacobi_iteration(const vector& v, const vector& b) const;
 
         vector Gauss_Seidel_iteration(const vector& v, const vector& b) const;
+
+        vector Symmetric_Gauss_Seidel_iteration(const vector& v, const vector& b) const;
     private:
         vector values;
         std::vector<unsigned> cols;

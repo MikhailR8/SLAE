@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <libSLAE/simple_iter.hpp>
+#include <libSLAE/Iter_solvers.hpp>
 
 // TEST(Matrix_test, first_matrix) {
 //     std::vector<std::vector<double>> arr = 
@@ -19,12 +19,11 @@
 
 // int main(int argc, char **argv) {
 int main(){
-    auto vector = simple_iter::find_Chebyshev_roots(3, 1, 2);
-    for(auto i = 0u; i< vector.size(); i++){
+    auto vector = Iter_solvers::find_Chebyshev_roots(3, 1, 5);
+    for(auto i = 0u; i < vector.size(); i++){
         std::cout << vector[i] << " ";
     }
     std::cout << std::endl;
     // testing::InitGoogleTest(&argc, argv);
     // return RUN_ALL_TESTS();
 }
-

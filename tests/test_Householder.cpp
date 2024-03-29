@@ -1,11 +1,9 @@
 #include <gtest/gtest.h>
-#include <libSLAE/Householder_alg.hpp>
-#include <iostream>
-#include <vector>
+#include <libSLAE/Precise_solvers.hpp>
 
 TEST(Matrix_test, first_matrix) {
     auto mat = dense_CSR::Matrix({{3, 5, 8}, {5, 3, 7}, {2, 4, 9}});
-    auto solution = Householder::solve_qr(std::vector<double>({8, 7, 6}), mat);
+    auto solution = Precise_solvers::solve_qr(std::vector<double>({8, 7, 6}), mat);
     ASSERT_NEAR(solution[0], 0.717, 0.001);
     ASSERT_NEAR(solution[1], 1.239, 0.001);
     ASSERT_NEAR(solution[2], -0.043, 0.001);
