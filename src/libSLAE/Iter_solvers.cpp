@@ -6,77 +6,232 @@ namespace Iter_solvers{
     using dense_CSR::operator-;
 
     vector Jacobi_iter(const dense_CSR::Matrix_CSR& A, const vector& x_0, const vector& b,
-    double target_discrepancy=5.0, unsigned frequency_checking=5u, unsigned max_iteration=100u){
+    double target_discrepancy, unsigned frequency_checking, unsigned max_iteration,
+    bool testmode){
         auto res = vector(x_0);
+        test_pair out({vector(), std::vector<unsigned long long>()});
+
         for (auto i = 0u; i < max_iteration; i+=frequency_checking){
-            if(dense_CSR::get_length(A * res - b) < target_discrepancy){
+            double discrepancy = dense_CSR::get_length(A * res - b);
+            if(discrepancy < target_discrepancy){
+                if(testmode) print_to_file(out, "Jacobi");
                 return res;
             }
             else{
                 for(auto j = 0u; j < frequency_checking; j++){
-                    res = A.Jacobi_iteration(res, b);
+                    if(testmode){
+                        out.first.push_back(discrepancy);
+                        {
+                            Timer T(&out.second);
+                            res = A.Jacobi_iteration(res, b);
+                        }
+                    }
+                    else{
+                        res = A.Jacobi_iteration(res, b);
+                    }
                 }
             }
         }
+        if(testmode) print_to_file(out, "Jacobi");
         return res;
     }
 
     vector Gauss_Seidel_iter(const dense_CSR::Matrix_CSR& A, const vector& x_0, const vector& b,
-    double target_discrepancy=5.0, unsigned frequency_checking=5u, unsigned max_iteration=100u){
+    double target_discrepancy, unsigned frequency_checking, unsigned max_iteration,
+    bool testmode){
         auto res = vector(x_0);
+        test_pair out({vector(), std::vector<unsigned long long>()});
+
         for (auto i = 0u; i < max_iteration; i+=frequency_checking){
-            if(dense_CSR::get_length(A * res - b) < target_discrepancy){
+            double discrepancy = dense_CSR::get_length(A * res - b);
+            if(discrepancy < target_discrepancy){
+                if(testmode) print_to_file(out, "Gauss_Seidel");
                 return res;
             }
             else{
                 for(auto j = 0u; j < frequency_checking; j++){
-                    res = A.Gauss_Seidel_iteration(res, b);
+                    if(testmode){
+                        out.first.push_back(discrepancy);
+                        {
+                            Timer T(&out.second);
+                            res = A.Gauss_Seidel_iteration(res, b);
+                        }
+                    }
+                    else{
+                        res = A.Gauss_Seidel_iteration(res, b);
+                    }
                 }
             }
         }
+        if(testmode) print_to_file(out, "Gauss_Seidel");
         return res;
     }
 
-    vector Symmetric_Gauss_Seidel_iter(const dense_CSR::Matrix_CSR& A, const vector& x_0,
-    const vector& b, double target_discrepancy=5.0,
-    unsigned frequency_checking=5u, unsigned max_iteration=100u) {
+    vector Symmetric_Gauss_Seidel_iter(const dense_CSR::Matrix_CSR& A, const vector& x_0, const vector& b,
+    double target_discrepancy, unsigned frequency_checking, unsigned max_iteration,
+    bool testmode){
         auto res = vector(x_0);
+        test_pair out({vector(), std::vector<unsigned long long>()});
+
         for (auto i = 0u; i < max_iteration; i+=frequency_checking){
-            if(dense_CSR::get_length(A * res - b) < target_discrepancy){
+            double discrepancy = dense_CSR::get_length(A * res - b);
+            if(discrepancy < target_discrepancy){
+                if(testmode) print_to_file(out, "Symmetric_Gauss_Seidel");
                 return res;
             }
             else{
                 for(auto j = 0u; j < frequency_checking; j++){
-                    res = A.Symmetric_Gauss_Seidel_iteration(res, b);
+                    if(testmode){
+                        out.first.push_back(discrepancy);
+                        {
+                            Timer T(&out.second);
+                            res = A.Symmetric_Gauss_Seidel_iteration(res, b);
+                        }
+                    }
+                    else{
+                        res = A.Symmetric_Gauss_Seidel_iteration(res, b);
+                    }
                 }
             }
         }
-        return res;        
+        if(testmode) print_to_file(out, "Symmetric_Gauss_Seidel");
+        return res;
     }
 
+    vector Symmetric_Gauss_Seidel_iter_boost(const dense_CSR::Matrix_CSR& A, const vector& x_0,
+    const vector& b, double target_discrepancy, unsigned frequency_checking,
+    unsigned max_iteration, double rho, bool testmode){
+        test_pair out({vector(), std::vector<unsigned long long>()});
+
+        double mu_i_minus_1 = 1.0; //mu_0
+        double mu_i = 1.0 / rho; //mu_1
+        double mu_i_plus_1 = 2.0 / rho * mu_i - mu_i_minus_1; //mu_2
+        vector y_i(x_0); //y_0
+        vector y_i_plus_1(b.size()); //y_1
+        if(testmode) {
+            {
+                Timer T(&out.second);
+                y_i_plus_1 = A.Symmetric_Gauss_Seidel_iteration(y_i, b);
+            }
+        } else{y_i_plus_1 = A.Symmetric_Gauss_Seidel_iteration(y_i, b);}
+
+    for (auto i = 0u; i < max_iteration; i+=frequency_checking){
+        double discrepancy = dense_CSR::get_length(A * y_i_plus_1 - b);
+        if(discrepancy < target_discrepancy){
+            if(testmode) print_to_file(out, "Symmetric_Gauss_Seidel_boost");
+            return y_i_plus_1;
+        }
+        else{
+            for(auto j = 0u; j < frequency_checking; j++){
+                if(testmode){
+                out.first.push_back(discrepancy);
+                {
+                    Timer T(&out.second);
+                    auto temp_y = y_i_plus_1;
+                    y_i_plus_1 = (2.0 * mu_i / rho / mu_i_plus_1) * 
+                    (A.Symmetric_Gauss_Seidel_iteration(y_i_plus_1, b))
+                    - (mu_i_minus_1 / mu_i_plus_1) * (y_i);
+                    y_i = temp_y;
+
+                    auto temp_mu_1 = mu_i;
+                    auto temp_mu_2 = mu_i_plus_1;
+                    mu_i_minus_1 = mu_i;
+                    mu_i = mu_i_plus_1;
+                    mu_i_plus_1 = 2.0 / rho * temp_mu_2 - temp_mu_1;
+                }
+            }
+                else{
+                auto temp_y = y_i_plus_1;
+                y_i_plus_1 = (2.0 * mu_i / rho / mu_i_plus_1) * 
+                (A.Symmetric_Gauss_Seidel_iteration(y_i_plus_1, b))
+                 - (mu_i_minus_1 / mu_i_plus_1) * (y_i);
+                y_i = temp_y;
+
+                auto temp_mu_1 = mu_i;
+                auto temp_mu_2 = mu_i_plus_1;
+                mu_i_minus_1 = mu_i;
+                mu_i = mu_i_plus_1;
+                mu_i_plus_1 = 2.0 / rho * temp_mu_2 - temp_mu_1;
+            }
+            }
+        }
+    }
+    if(testmode) print_to_file(out, "Symmetric_Gauss_Seidel_boost");
+    return y_i_plus_1;     
+    }   
+
     vector simple_iter(const dense_CSR::Matrix_CSR& A, const vector& x_0, const vector& b, double tau,
-    double target_discrepancy=5.0, unsigned frequency_checking=5u, unsigned max_iteration=100u){
+    double target_discrepancy, unsigned frequency_checking, unsigned max_iteration, bool testmode){
         auto res = vector(x_0);
+        test_pair out({vector(), std::vector<unsigned long long>()});
+
         for (auto i = 0u; i < max_iteration; i+=frequency_checking){
-            if(dense_CSR::get_length(A * res - b) < target_discrepancy){
+            double discrepancy = dense_CSR::get_length(A * res - b);
+            if(discrepancy < target_discrepancy){
+                if(testmode) print_to_file(out, "Simple_iter");
                 return res;
             }
             else{
                 for(auto j = 0u; j < frequency_checking; j++){
-                    res = res - tau * (A * res - b);
+                    if(testmode){
+                        out.first.push_back(discrepancy);
+                        {
+                            Timer T(&out.second);
+                            res = res - tau * (A * res - b);
+                        }
+                    }
+                    else{
+                        res = res - tau * (A * res - b);
+                    }
                 }
             }
         }
+        if(testmode) print_to_file(out, "Simple_iter");
         return res;
     } 
     
     vector simple_iter_boost(const dense_CSR::Matrix_CSR& A, const vector& x_0,
-    const vector& b, double lambda_min, double lambda_max, double target_discrepancy=5.0,
-    unsigned frequency_checking=5u, unsigned max_iteration=100u, unsigned quantity_roots = 3u){
+    const vector& b, double lambda_min, double lambda_max, double target_discrepancy,
+    unsigned frequency_checking, unsigned max_iteration, unsigned quantity_roots, bool testmode){
         auto res = vector(x_0);
-        auto steps = find_Chebyshev_roots(quantity_roots, lambda_min, lambda_max);
+        test_pair out({vector(), std::vector<unsigned long long>()});
+        vector steps(1u << quantity_roots);
+
+        if(testmode){
+            {
+                Timer(&out.second);
+                steps = find_Chebyshev_roots(quantity_roots, lambda_min, lambda_max);
+            }
+        } else{steps = find_Chebyshev_roots(quantity_roots, lambda_min, lambda_max);}
         auto step = 0u;
         unsigned count = 1u << quantity_roots;
+        for (auto i = 0u; i < max_iteration; i+=frequency_checking){
+            double discrepancy = dense_CSR::get_length(A * res - b);
+            if(discrepancy < target_discrepancy){
+                if(testmode) print_to_file(out, "Simple_iter_boost");
+                return res;
+            }
+            else{
+                for(auto j = 0u; j < frequency_checking; j++){
+                    if(testmode){
+                        out.first.push_back(discrepancy);
+                        {
+                            Timer T(&out.second);
+                            res = res - steps[step % count] * (A * res - b);
+                            step++;
+                        }
+                    }
+                    else{
+                        res = res - steps[step % count] * (A * res - b);
+                        step++;
+                    }
+                }
+            }
+        }
+        if(testmode) print_to_file(out, "Simple_iter_boost");
+        return res;
+
+
         for (auto i = 0u; i < max_iteration; i+=frequency_checking){
             if(dense_CSR::get_length(A * res - b) < target_discrepancy){
                 return res;
@@ -92,21 +247,37 @@ namespace Iter_solvers{
     }    
 
     vector fastest_descent(const dense_CSR::Matrix_CSR& A, const vector& x_0, const vector& b,
-    double target_discrepancy=5.0, unsigned frequency_checking=5u, unsigned max_iteration=100u){
+    double target_discrepancy, unsigned frequency_checking, unsigned max_iteration, bool testmode){
         auto res = vector(x_0);
+        test_pair out({vector(), std::vector<unsigned long long>()});
         vector discrepancy = A * res - b;
+
         for (auto i = 0u; i < max_iteration; i+=frequency_checking){
-            if(dense_CSR::get_length(discrepancy) < target_discrepancy){
+            double discrepancy_mod = dense_CSR::get_length(A * res - b);
+            if(discrepancy_mod < target_discrepancy){
+                if(testmode) print_to_file(out, "Fastest_descent");
                 return res;
             }
             else{
                 for(auto j = 0u; j < frequency_checking; j++){
-                    double tau = (discrepancy * discrepancy) / (discrepancy * (A * discrepancy));
-                    res = res - tau * (discrepancy);
-                    discrepancy = A * res - b;
+                    if(testmode){
+                        out.first.push_back(discrepancy_mod);
+                        {
+                            Timer T(&out.second);
+                            double tau = (discrepancy * discrepancy) / (discrepancy * (A * discrepancy));
+                            res = res - tau * (discrepancy);
+                            discrepancy = A * res - b;
+                        }
+                    }
+                    else{
+                        double tau = (discrepancy * discrepancy) / (discrepancy * (A * discrepancy));
+                        res = res - tau * (discrepancy);
+                        discrepancy = A * res - b;
+                    }
                 }
             }
         }
+        if(testmode) print_to_file(out, "Fastest_descent");
         return res;
     }
 

@@ -52,6 +52,9 @@ namespace dense_CSR{
         vector Gauss_Seidel_iteration(const vector& v, const vector& b) const;
 
         vector Symmetric_Gauss_Seidel_iteration(const vector& v, const vector& b) const;
+        
+        //Estimate max eigenvalue
+        double power_iteration(unsigned max_iteration, double precision) const;
     private:
         vector values;
         std::vector<unsigned> cols;

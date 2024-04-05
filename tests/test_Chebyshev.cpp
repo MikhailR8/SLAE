@@ -19,9 +19,9 @@
 
 // int main(int argc, char **argv) {
 int main(){
-    auto vector = Iter_solvers::find_Chebyshev_roots(3, 1, 5);
-    for(auto i = 0u; i < vector.size(); i++){
-        std::cout << vector[i] << " ";
+    auto vec = Iter_solvers::find_Chebyshev_roots(3, 1, 5);
+    for(auto i = 0u; i < vec.size(); i++){
+        std::cout << vec[i] << " ";
     }
     std::cout << std::endl;
     // testing::InitGoogleTest(&argc, argv);

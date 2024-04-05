@@ -202,6 +202,29 @@ namespace dense_CSR{
         return res;        
     }
 
+    double Matrix_CSR::power_iteration(unsigned max_iteration, double precision) const {
+        vector r(n);
+        for(auto i = 0u; i < n; i++){
+            r[i] = 1.0; //r_0
+        }
+        vector Ar = this->operator*(r); //Ar_0
+        r = (1 / get_length(Ar)) * Ar; //r_1
+        Ar = this->operator*(r); //Ar_1
+        double max_eigenvalue = (r * Ar) / (r * r); // mu_1
+        for(auto i = 1u; i < max_iteration; i++){
+            r = (1 / get_length(Ar)) * Ar;
+            Ar = this->operator*(r);
+            double temp_max_eigenvalue = (r * Ar) / (r * r);
+            if(std::abs(temp_max_eigenvalue - max_eigenvalue) <= precision){
+                return temp_max_eigenvalue;
+            }
+            else{
+                max_eigenvalue = temp_max_eigenvalue;
+            }
+        }
+        return max_eigenvalue;
+    }
+
     vector operator+(const vector& lhs, const vector& rhs){
         auto res = vector(lhs.size());
         for (auto i = 0u; i < lhs.size(); i++){
