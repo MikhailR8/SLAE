@@ -281,6 +281,43 @@ namespace Iter_solvers{
         return res;
     }
 
+    vector Conjugate_gradient(const dense_CSR::Matrix_CSR& A, const vector& x_0, const vector& b,
+    double target_discrepancy, unsigned frequency_checking, unsigned max_iteration,
+    bool testmode = false){
+        auto res = vector(x_0); //x_0
+        test_pair out({vector(), std::vector<unsigned long long>()});
+        vector discrepancy = A * res - b; //r_0
+        vector d = discrepancy; //d_0
+        double discrepancy_mod = dense_CSR::get_length(discrepancy);
+        if(discrepancy_mod < target_discrepancy){
+            if(testmode) print_to_file(out, "Conjugate_gradient");
+            return res;
+        }
+
+        for (auto i = 0u; i < max_iteration; i++){
+            if(testmode){
+            out.first.push_back(discrepancy_mod);
+                {
+                    Timer T(&out.second);
+                }
+            }
+            else{
+                double alpha = (discrepancy * discrepancy) / (d * (A * d));
+                res = res - alpha * d;
+                vector discrepancy_plus_1 = A * res - b;
+                discrepancy_mod = dense_CSR::get_length(discrepancy_plus_1);
+                if(discrepancy_mod < target_discrepancy){
+                    return res;                   
+                }
+                else{
+                    double beta = (discrepancy_plus_1 * discrepancy_plus_1);
+                }
+            }
+        }
+        if(testmode) print_to_file(out, "Conjugate_gradient");
+        return res;        
+    }
+
     vector find_Chebyshev_roots(unsigned n, double lambda_min, double lambda_max){
         unsigned count = 1u << n; //2^n
         std::vector<unsigned> indices(count);
