@@ -35,9 +35,11 @@ namespace Iter_solvers{
     double target_discrepancy, unsigned frequency_checking, unsigned max_iteration,
     bool testmode = false);
 
+    //Здесь нет frequency_checking, так как проверку делаем каждый раз, чтобы не поделить на ноль,
+    //(Это не долго, всё равно невязку на каждом шаге мы знаем), величина epsilon должна ограничивать
+    //близость d к нулю, чтобы если на какой-то итерации d оказался 0, на следующей x_i+1 не стал nan 
     vector Conjugate_gradient(const dense_CSR::Matrix_CSR& A, const vector& x_0, const vector& b,
-    double target_discrepancy, unsigned frequency_checking, unsigned max_iteration,
-    bool testmode = false);
+    double target_discrepancy, unsigned max_iteration, double epsilon=10E-30, bool testmode = false);
 
     //Возвращает 2^n корней на отрезке [lambda_min, lambda_max] в оптимальном порядке
     vector find_Chebyshev_roots(unsigned n, double lambda_min, double lambda_max);

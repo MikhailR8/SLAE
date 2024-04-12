@@ -282,13 +282,19 @@ namespace Iter_solvers{
     }
 
     vector Conjugate_gradient(const dense_CSR::Matrix_CSR& A, const vector& x_0, const vector& b,
-    double target_discrepancy, unsigned frequency_checking, unsigned max_iteration,
-    bool testmode = false){
-        auto res = vector(x_0); //x_0
+    double target_discrepancy, unsigned max_iteration, double epsilon, bool testmode){
+        //Матрица A O(n*) memory
+        auto res = vector(x_0); //x_0 O(n) memory
         test_pair out({vector(), std::vector<unsigned long long>()});
-        vector discrepancy = A * res - b; //r_0
-        vector d = discrepancy; //d_0
-        double discrepancy_mod = dense_CSR::get_length(discrepancy);
+        vector discrepancy = A * res - b; //r_0 O(n) memory
+        vector d = discrepancy; //d_0 O(n) memory
+        double discrepancy_mod = dense_CSR::get_length(discrepancy); //O(const) memory
+        double d_mod = discrepancy_mod; //O(n) memory
+        double alpha = 0.0; //O(const) memory
+        double beta = 0.0; //O(const) memory
+        vector discrepancy_plus_1(x_0.size()); //O(n) memory
+
+        if(testmode) out.first.push_back(discrepancy_mod);
         if(discrepancy_mod < target_discrepancy){
             if(testmode) print_to_file(out, "Conjugate_gradient");
             return res;
@@ -296,22 +302,40 @@ namespace Iter_solvers{
 
         for (auto i = 0u; i < max_iteration; i++){
             if(testmode){
-            out.first.push_back(discrepancy_mod);
                 {
                     Timer T(&out.second);
+                    alpha = (discrepancy * discrepancy) / (d * (A * d));
+                    res = res - alpha * d;
+                    discrepancy_plus_1 = A * res - b;
+                    beta = (discrepancy_plus_1 * discrepancy_plus_1) / (discrepancy * discrepancy);
+                    d = discrepancy_plus_1 + beta * d;
+                    discrepancy = discrepancy_plus_1;
+                    discrepancy_mod = dense_CSR::get_length(discrepancy_plus_1);
+                    d_mod = dense_CSR::get_length(d);           
                 }
+                out.first.push_back(discrepancy_mod);
+                if(discrepancy_mod < target_discrepancy || d_mod < epsilon){
+                    print_to_file(out, "Conjugate_gradient");
+                    return res;                   
+                }                            
             }
             else{
-                double alpha = (discrepancy * discrepancy) / (d * (A * d));
-                res = res - alpha * d;
-                vector discrepancy_plus_1 = A * res - b;
-                discrepancy_mod = dense_CSR::get_length(discrepancy_plus_1);
-                if(discrepancy_mod < target_discrepancy){
+                alpha = (discrepancy * discrepancy) / (d * (A * d)); //O(n*) speed
+                res = res - alpha * d; //O(n) speed
+                discrepancy_plus_1 = A * res - b; //O(n*) speed
+                beta = (discrepancy_plus_1 * discrepancy_plus_1) / (discrepancy * discrepancy); //O(n) speed
+                d = discrepancy_plus_1 + beta * d; //O(n) speed
+                discrepancy = discrepancy_plus_1; //O(n) speed
+                discrepancy_mod = dense_CSR::get_length(discrepancy_plus_1); //O(n) speed
+                d_mod = dense_CSR::get_length(d); //O(n) speed
+
+                // dense_CSR::print_vector(discrepancy);                
+                // dense_CSR::print_vector(d);
+                
+                // std::cout << std::endl;
+                if(discrepancy_mod < target_discrepancy || d_mod < epsilon){
                     return res;                   
-                }
-                else{
-                    double beta = (discrepancy_plus_1 * discrepancy_plus_1);
-                }
+                }             
             }
         }
         if(testmode) print_to_file(out, "Conjugate_gradient");

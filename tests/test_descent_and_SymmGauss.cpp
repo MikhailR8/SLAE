@@ -24,14 +24,16 @@ int main(){
     auto b = std::vector<double>({5, 0, -4});
     auto x_0 = std::vector<double>({-4, 4, 4});
     auto mat = dense_CSR::Matrix_CSR(arr);
-    auto out = Iter_solvers::Jacobi_iter(mat, x_0, b, 0.01, 1, 20);
+    // auto out = Iter_solvers::Jacobi_iter(mat, x_0, b, 0.01, 1, 20);
     // auto out1 = Iter_solvers::Symmetric_Gauss_Seidel_iter(mat, x_0, b, 0.01, 1, 20);
     // auto out2 = Iter_solvers::fastest_descent(mat, x_0, b, 0.01, 1, 20); 
-    auto out3 = Iter_solvers::Symmetric_Gauss_Seidel_iter_boost(mat, x_0, b, 0.01, 1, 20);
-    dense_CSR::print_vector(out);
+    auto out3 = Iter_solvers::Symmetric_Gauss_Seidel_iter_boost(mat, x_0, b, 10E-200, 1, 2000, 0.5);
+    auto out4 = Iter_solvers::Conjugate_gradient(mat, x_0, b, 10E-100, 2000, 10E-25);
+    // dense_CSR::print_vector(out);
     // dense_CSR::print_vector(out1);
     // dense_CSR::print_vector(out2);
     dense_CSR::print_vector(out3);
+    dense_CSR::print_vector(out4); 
     // testing::InitGoogleTest(&argc, argv);
     // return RUN_ALL_TESTS();
 }
