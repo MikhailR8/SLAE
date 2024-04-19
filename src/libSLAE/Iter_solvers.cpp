@@ -342,6 +342,42 @@ namespace Iter_solvers{
         return res;        
     }
 
+    dense_CSR::GMRES_cache Arnoldi_alg(const dense_CSR::Matrix_CSR& A, const vector& x_0, const vector& b,
+    unsigned max_iteration, bool testmode){
+        auto cache = dense_CSR::GMRES_cache(A, max_iteration);
+        vector t(max_iteration);
+        auto v = A * x_0 - b;
+        v = (1 / dense_CSR::get_length(v)) * v; //v_0
+        
+        for (auto j = 0u; j < max_iteration; j++){
+            vector h(max_iteration + 1u);
+            t = A * v;
+            for (auto k = 0u; k < j; k++){
+                h[k] = v * t;
+                t = t - h[k] * v;
+            }
+            auto temp_h_j_plus_1 = dense_CSR::get_length(t);
+            h[j+1] = temp_h_j_plus_1;
+            //Вращения Гивенса: сначала применяем уже посчитанные, затем вычисляем новое
+            for(auto i = 0u; i < j; i++){
+                vector cos_sin = cache.get_rotation(i);
+                auto temp = h[i];
+                h[i] = temp * cos_sin[0] - h[i+1] * cos_sin[1];
+                h[i+1] = temp * cos_sin[1] + h[i+1] * cos_sin[0];
+            }
+            double new_cos = h[j] / std::sqrt(h[j] * h[j] + h[j+1] * h[j+1]);
+            double new_sin = (-1) * h[j+1] / std::sqrt(h[j] * h[j] + h[j+1] * h[j+1]);
+            double temp = h[j];
+            h[j] = temp * new_cos - h[j+1] * new_sin;
+            h[j+1] = temp * new_sin + h[j+1] * new_cos;
+            cache.add_v_and_rotation_and_R(v, new_cos, new_sin, h);
+            //Конец вращений, в кэш записаны v, новое вращение и приведённый к верхнетреугольному виду
+            //вектор h
+            v = (1 / temp_h_j_plus_1) * t;
+        }
+        return cache;
+    }
+
     vector find_Chebyshev_roots(unsigned n, double lambda_min, double lambda_max){
         unsigned count = 1u << n; //2^n
         std::vector<unsigned> indices(count);

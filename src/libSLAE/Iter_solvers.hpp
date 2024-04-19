@@ -41,6 +41,9 @@ namespace Iter_solvers{
     vector Conjugate_gradient(const dense_CSR::Matrix_CSR& A, const vector& x_0, const vector& b,
     double target_discrepancy, unsigned max_iteration, double epsilon=10E-30, bool testmode = false);
 
+    dense_CSR::GMRES_cache Arnoldi_alg(const dense_CSR::Matrix_CSR& A, const vector& x_0, const vector& b,
+    unsigned max_iteration, bool testmode = false);
+
     //Возвращает 2^n корней на отрезке [lambda_min, lambda_max] в оптимальном порядке
     vector find_Chebyshev_roots(unsigned n, double lambda_min, double lambda_max);
 }
