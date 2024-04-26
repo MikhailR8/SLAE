@@ -73,26 +73,6 @@ namespace dense_CSR{
             std::cout << std::endl;
         }
     }
-    
-    class GMRES_cache{
-    public:
-        GMRES_cache(const Matrix_CSR& matrix, unsigned max_iter);
-
-        void add_v_and_rotation_and_R(const vector& inputv, double cos,
-         double sin, const vector& inputR);
-
-        Matrix get_V();
-
-        vector get_rotation(unsigned num);
-
-        Matrix get_R();
-    private:
-        Matrix_CSR A; //Матрица СЛАУ n x n
-        Matrix vs; //Матрица из векторов v, хранящихся в столбцы, имеет размер n x k, k - число итераций
-        Matrix Givens_rotations; //Матрица k x 2, строка этой матрицы - (cos \theta_i, sin \theta_i)
-        Matrix Rs; //Верхнетреугольная матрица, преобразованная из матрицы Хессинберга, (k+1) x k
-        unsigned int filled_rows; //Количество заполненных строк в матрицe Givens_rotation/столбцов vs
-    };
 
     vector operator+(const vector& lhs, const vector& rhs);
 

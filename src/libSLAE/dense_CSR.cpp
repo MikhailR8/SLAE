@@ -225,33 +225,6 @@ namespace dense_CSR{
         return max_eigenvalue;
     }
 
-
-    GMRES_cache::GMRES_cache(const Matrix_CSR& matrix, unsigned max_iter):
-     A{matrix}, vs{std::vector<vector>(matrix.get_size().first, vector(max_iter))}, 
-     Givens_rotations{std::vector<vector>(max_iter, vector(2u))}, filled_rows{0u},
-     Rs{std::vector<vector>(matrix.get_size().first, vector(max_iter))} {}
-
-    void GMRES_cache::add_v_and_rotation_and_R(const vector& inputv, double cos,
-         double sin, const vector& inputR){
-        vs.set_col(0u, inputv, filled_rows);
-        Rs.set_col(0u, inputR, filled_rows);
-        Givens_rotations.set_row(0u, std::vector({cos, sin}), filled_rows);
-        filled_rows++;        
-    }
-
-    Matrix GMRES_cache::get_V(){
-        return vs;
-    }
-
-    vector GMRES_cache::get_rotation(unsigned num){
-        return Givens_rotations.get_row(0u, 2u, num);
-    }
-
-    Matrix GMRES_cache::get_R(){
-        return Rs;
-    }
-
-
     vector operator+(const vector& lhs, const vector& rhs){
         auto res = vector(lhs.size());
         for (auto i = 0u; i < lhs.size(); i++){

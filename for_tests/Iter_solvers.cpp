@@ -342,6 +342,107 @@ namespace Iter_solvers{
         return res;        
     }
 
+    vector GMRES(const dense_CSR::Matrix_CSR& A, const vector& x_0, const vector& b,
+    double target_discrepancy, unsigned max_iteration, bool testmode){
+        auto cache = Arnoldi_alg(A, x_0, b, max_iteration, target_discrepancy, testmode);
+        unsigned filled = cache.get_filled();
+        // vector z(filled + 1u);
+        vector z(filled);
+
+        double sin_multiplication = 1.0;
+        for(auto i = 0u; i < filled; i++){
+            auto temp = cache.get_rotation(i); //:( structured binding не работают с вектором
+            double cos = temp[0], sin = temp[1];
+            z[i] = cos * sin_multiplication;
+            sin_multiplication *= sin;
+        }
+        z = dense_CSR::get_length(A * x_0 - b) * z;
+        std::cout << "Z:" << std::endl;
+        dense_CSR::print_vector(z);
+        std::cout << sin_multiplication << std::endl;
+        // z[filled] = sin_multiplication;
+        auto R = cache.get_R();
+        vector y(z);
+        for (auto k = 0u; k < filled; k++){
+            auto i = filled - 1u - k; //новый счётчик
+            auto row = R.get_row(0, filled, i);
+            y[i] *= (1 / row[i]);
+            row = (1 / row[i]) * row;
+            R.set_row(0, row, i);
+            for (auto p = 0u; p < k; p++){
+                auto j = filled - 1u - p; //новый счётчик
+                y[i] -= y[j] * (R(i, j));
+            }
+        }
+        dense_CSR::print_vector(y);
+        auto answer = vector(x_0);
+        auto V = cache.get_V();
+        for(auto i = 0u; i < filled; i++){
+            answer[i] = answer[i] - (V.get_row(0, filled, i) * y);
+        }
+        return answer;
+    }
+
+    dense_CSR::GMRES_cache Arnoldi_alg(const dense_CSR::Matrix_CSR& A, const vector& x_0, const vector& b,
+    unsigned max_iteration, double target_discrepancy, bool testmode){
+        auto cache = dense_CSR::GMRES_cache(A, max_iteration);
+        vector t(max_iteration);
+        auto v = A * x_0 - b;
+        double discrepancy_if_execute = dense_CSR::get_length(v); //gamma_0
+        v = (1 / dense_CSR::get_length(v)) * v; //v_0
+
+        for (auto j = 0u; j < max_iteration; j++){
+            vector h(max_iteration + 1u);
+            t = A * v;
+            for (auto k = 0u; k < j + 1u; k++){
+                if(k != j){
+                    h[k] = cache.get_v_num(k) * t;
+                    t = t - h[k] * cache.get_v_num(k);
+                }
+                else{
+                    h[k] = v * t;
+                    t = t - h[k] * v;                    
+                }
+            }
+            auto temp_h_j_plus_1 = dense_CSR::get_length(t);
+            h[j+1] = temp_h_j_plus_1;
+            std::cout << "h:" << std::endl;
+            dense_CSR::print_vector(h);
+            //Вращения Гивенса: сначала применяем уже посчитанные, затем вычисляем новое
+            for(auto i = 0u; i < j; i++){
+                vector cos_sin = cache.get_rotation(i);
+                auto temp = h[i];
+                h[i] = temp * cos_sin[0] - h[i+1] * cos_sin[1];
+                h[i+1] = temp * cos_sin[1] + h[i+1] * cos_sin[0];
+            }
+            double new_cos = h[j] / std::sqrt(h[j] * h[j] + h[j+1] * h[j+1]);
+            double new_sin = (-1) * h[j+1] / std::sqrt(h[j] * h[j] + h[j+1] * h[j+1]);
+            double temp = h[j];
+            h[j] = temp * new_cos - h[j+1] * new_sin;
+            h[j+1] = temp * new_sin + h[j+1] * new_cos;
+            cache.add_v_and_rotation_and_R(v, new_cos, new_sin, h);
+
+            // std::cout << "Filled: " << cache.get_filled() << std::endl;
+            //Конец вращений, в кэш записаны v, новое вращение и приведённый к верхнетреугольному виду
+            //вектор h
+            v = (1 / temp_h_j_plus_1) * t;
+
+            discrepancy_if_execute *= new_sin;
+            //
+            std::cout << "Sin: " << new_sin << std::endl;
+            std::cout << "R: " << std::endl;
+            dense_CSR::print_matrix<dense_CSR::Matrix>(cache.get_R());
+            // std::cout << "V: " << std::endl;
+            // dense_CSR::print_matrix<dense_CSR::Matrix>(cache.get_V());
+            std::cout << discrepancy_if_execute << std::endl;
+            //
+            if(abs(discrepancy_if_execute) <= target_discrepancy){
+                return cache;
+            }
+        }
+        return cache;
+    }
+
     vector find_Chebyshev_roots(unsigned n, double lambda_min, double lambda_max){
         unsigned count = 1u << n; //2^n
         std::vector<unsigned> indices(count);
