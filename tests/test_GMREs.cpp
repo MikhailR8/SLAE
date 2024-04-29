@@ -24,7 +24,7 @@ int main(){
     auto b = dense_CSR::vector({5, 0, -4});
     auto x_0 = std::vector<double>({-4, 4, 4});
     auto mat = dense_CSR::Matrix_CSR(arr);
-    auto out = Iter_solvers::GMRES(mat, x_0, b, 10E-2, 3);
+    auto out = Iter_solvers::GMRES(mat, x_0, b, 10E-2, 4, true);
     // std::cout << std::endl;
     // std::cout << dense_CSR::get_length(dense_CSR::operator-(mat * out, b)) << std::endl;
     // auto cache = Iter_solvers::Arnoldi_alg(mat, x_0, b, 3);
