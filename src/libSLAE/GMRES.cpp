@@ -4,7 +4,7 @@ namespace dense_CSR{
     GMRES_cache::GMRES_cache(const Matrix_CSR& matrix, unsigned max_iter):
      A{matrix}, vs{std::vector<vector>(matrix.get_size().first, vector(max_iter))}, 
      Givens_rotations{std::vector<vector>(max_iter, vector(2u))}, filled_rows{0u},
-     Rs{std::vector<vector>(max_iter + 1u, vector(max_iter))} {}
+     Rs{std::vector<vector>(max_iter + 1u, vector(max_iter))}, discrepancy_if_exe{1.0 / 0.0} {}
 
     void GMRES_cache::add_v_and_rotation_and_R(const vector& inputv, double cos,
          double sin, const vector& inputR){
@@ -33,6 +33,14 @@ namespace dense_CSR{
     unsigned int GMRES_cache::get_filled() const{
         return filled_rows;
     }
+
+    double GMRES_cache::get_dis() const{
+        return discrepancy_if_exe;
+    }
+
+    void GMRES_cache::set_dis(double dis){
+        discrepancy_if_exe = dis;
+    }
 }
 
 namespace Iter_solvers{
@@ -47,6 +55,7 @@ namespace Iter_solvers{
         vector z(filled);
         auto answer = vector(x_0);
         test_pair out({vector(), std::vector<unsigned long long>()});
+        double sin_multiplication = 1.0;
 
         if(testmode){
             {
@@ -57,7 +66,6 @@ namespace Iter_solvers{
                 // (c_0, c_1*s_0, c_2*s_0*s_1, ..., c_n*s_0*...*s_(n-1), s_n*s_0*...*s_(n-1))^T, здесь 
                 // c - cos и s - sin поворотов. Таким образом, последний элемент этого столбца гамма = 
                 //произведению всех синусов поворотов, а все остальные элементы вычисляем ниже
-                double sin_multiplication = 1.0;
                 for(auto i = 0u; i < filled; i++){
                     auto temp = cache.get_rotation(i); //:( structured binding не работают с вектором
                     double cos = temp[0], sin = temp[1];
@@ -93,7 +101,6 @@ namespace Iter_solvers{
             // (c_0, c_1*s_0, c_2*s_0*s_1, ..., c_n*s_0*...*s_(n-1), s_n*s_0*...*s_(n-1))^T, здесь 
             // c - cos и s - sin поворотов. Таким образом, последний элемент этого столбца гамма = 
             //произведению всех синусов поворотов, а все остальные элементы вычисляем ниже
-            double sin_multiplication = 1.0;
             for(auto i = 0u; i < filled; i++){
                 auto temp = cache.get_rotation(i); //:( structured binding не работают с вектором
                 double cos = temp[0], sin = temp[1];
@@ -122,7 +129,11 @@ namespace Iter_solvers{
             }            
         }
         if(testmode) print_to_file(out, "GMRES");
-        return answer;
+        if(std::abs(sin_multiplication * dense_CSR::get_length(A * answer - b)) > target_discrepancy){
+            return GMRES(A, answer, b, target_discrepancy, max_iteration, testmode);
+        } else{
+            return answer;
+        }
     }
 
     dense_CSR::GMRES_cache Arnoldi_alg(const dense_CSR::Matrix_CSR& A, const vector& x_0, const vector& b,
@@ -133,6 +144,10 @@ namespace Iter_solvers{
         double discrepancy_if_execute = dense_CSR::get_length(v); //gamma_0
         v = (1 / dense_CSR::get_length(v)) * v; //v_0
         test_pair out({vector(), std::vector<unsigned long long>()});
+        if (testmode) {
+            out.first.push_back(discrepancy_if_execute);
+            out.second.push_back(0ull);
+        }
 
         for (auto j = 0u; j < max_iteration; j++){
             if(testmode){

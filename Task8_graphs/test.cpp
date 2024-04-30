@@ -52,7 +52,7 @@ int main(){
     // auto vec7 = Iter_solvers::fastest_descent(matrix, vec, b, target_discrepancy, 1, max_iteration, true);
     auto vec8 = Iter_solvers::Conjugate_gradient(matrix, vec, b,
      target_discrepancy, max_iteration, 10E-20, true); 
-    auto vec9 = Iter_solvers::GMRES(matrix, vec, b, target_discrepancy, max_iteration, true); 
+    auto vec9 = Iter_solvers::GMRES(matrix, vec, b, target_discrepancy, 4u, true); 
     dense_CSR::print_vector(vec8); 
     std::cout << std::endl;
     dense_CSR::print_vector(vec9); 
